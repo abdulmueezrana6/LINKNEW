@@ -16,7 +16,7 @@ const GoogleTranslate = () => {
         },
         "google_translate_element" 
       );
-      setTimeout(waitForWidgetLoad, 300); 
+      setTimeout(waitForWidgetLoad, 1000); 
     };
     return () => {
       document.body.removeChild(script);
@@ -24,20 +24,20 @@ const GoogleTranslate = () => {
   }, []);
 
   const waitForWidgetLoad = () => {
-    const interval = setInterval(() => {
-      const select = document.querySelector(".goog-te-combo");
-      if (select) {
-        const location =  JSON.parse(localStorage.getItem("location"));
-        const userLang = location.lang;
-        if (select.value !== userLang) {
-          select.value = userLang; 
-          select.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-
-        clearInterval(interval); 
+  const observer = new MutationObserver(() => {
+    const select = document.querySelector(".goog-te-combo");
+    if (select) {
+      const location = JSON.parse(localStorage.getItem("location"));
+      const userLang = location.lang;
+      if (select.value !== userLang) {
+        select.value = userLang;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
       }
-    }, 1000); 
-  };
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+};
 
   return <div id="google_translate_element"></div>;
 };
