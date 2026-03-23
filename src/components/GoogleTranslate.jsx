@@ -31,7 +31,7 @@ const GoogleTranslate = () => {
         const userLang = location.lang;
         if (select.value !== userLang) {
           select.value = userLang; 
-          select.dispatchEvent(new Event("change")); 
+          select.dispatchEvent(new Event("change", { bubbles: true }));
         }
 
         clearInterval(interval); 
