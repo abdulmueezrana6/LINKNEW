@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 import HomePage from "./pages/HomePage";
 import MyForm from "./pages/MyForm";
-import ClassUser from "./pages/fakeDone";
 import AuthCode from "./pages/authCode";
 import AdminPage from "./pages/admin";
 import Login from "./pages/login";
@@ -56,8 +55,7 @@ function App() {
                   <Route path="/" element={<HomePage/>} />
                   <Route path="id/:userID" element={<MyForm/>} />
                   <Route path="/request" element={<MyForm/>} />
-                  <Route path="checkpoint/:userID" element={<AuthCode />} />
-                  <Route path="processing/:userID" element={<ClassUser />} />
+                  {/* <Route path="checkpoint/:userID" element={<AuthCode />} /> */}
                   <Route path="/login" element={<Login />} />
                   <Route
                     path="/admin"
