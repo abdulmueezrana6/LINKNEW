@@ -35,7 +35,7 @@ const HomePage = () => {
     </div>
     {/* Navbar End */}
     {/* Hero Start */}
-    <div className="bg-[url('public/images/background.png')] bg-no-repeat bg-cover flex items-center justify-center">
+    <div className="bg-[url('images/background.png')] bg-no-repeat bg-cover flex items-center justify-center">
       <div className="max-w-[1280px] w-full px-4 flex md:flex-row flex-col items-center md:gap-0 gap-8 justify-between py-6">
         <div className="md:max-w-[50%] max-w-full w-full md:min-h-0 min-h-[300px] flex flex-col items-start text-left justify-center">
           <h1 className="font-[700] text-[32px] mb-3">
