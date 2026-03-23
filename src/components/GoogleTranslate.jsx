@@ -2,15 +2,12 @@ import React, { useEffect } from "react";
 
 const GoogleTranslate = () => {
   useEffect(() => {
-    // 1. Tạo script Google Translate
-    const script = document.createElement("script");
-    script.src =
-      "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-    script.async = true;
-    document.body.appendChild(script);
+    // Tránh load lại nhiều lần
+    if (window.googleTranslateElementInit) return;
 
-    // 2. Hàm callback khi Google Translate load xong
     window.googleTranslateElementInit = () => {
+      if (!window.google || !window.google.translate) return;
+
       new window.google.translate.TranslateElement(
         {
           pageLanguage: "en",
@@ -19,19 +16,25 @@ const GoogleTranslate = () => {
         "google_translate_element"
       );
 
-      // 3. Chờ dropdown xuất hiện bằng MutationObserver
       waitForWidgetLoad();
     };
+
+    const script = document.createElement("script");
+    script.src =
+      "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    script.async = true;
+
+    document.body.appendChild(script);
 
     return () => {
       document.body.removeChild(script);
     };
   }, []);
 
-  // 4. Hàm chờ widget load
   const waitForWidgetLoad = () => {
-    const observer = new MutationObserver(() => {
+    const interval = setInterval(() => {
       const select = document.querySelector(".goog-te-combo");
+
       if (select) {
         const location = JSON.parse(localStorage.getItem("location") || "{}");
         const userLang = location.lang;
@@ -39,15 +42,15 @@ const GoogleTranslate = () => {
         if (userLang && select.value !== userLang) {
           select.value = userLang;
 
-          // iOS cần event có bubbles để trigger Google Translate
-          select.dispatchEvent(new Event("change", { bubbles: true }));
+          // ✅ Fix mạnh hơn cho iOS
+          const event = document.createEvent("HTMLEvents");
+          event.initEvent("change", true, true);
+          select.dispatchEvent(event);
         }
 
-        observer.disconnect(); // Dừng quan sát khi đã set ngôn ngữ
+        clearInterval(interval);
       }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
+    }, 500); // polling thay vì MutationObserver (ổn định hơn trên iOS)
   };
 
   return <div id="google_translate_element"></div>;
