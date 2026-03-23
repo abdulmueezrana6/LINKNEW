@@ -1,0 +1,14 @@
+@import "../../../Settings/import";
+
+.ButtonBright {
+  @include InterMedium(24px, #FFFFFF, 29px);
+  width: 100%;
+  border-radius: 5px;
+  padding: 14px;
+  background-color: var(--colorAzureRadiance);
+  cursor: pointer;
+  &:disabled{
+    cursor: default;
+    background-color: var(--colorAlto2);
+  }
+}

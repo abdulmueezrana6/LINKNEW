@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@mixin InterSemiBold($fz,$color,$lh) {
+  font-family: 'Inter', 'sans-serif';
+  font-style: normal;
+  font-weight: 600;
+  font-size: $fz;
+  line-height: $lh;
+  color: $color;
+}
+@mixin InterBold($fz,$color,$lh) {
+  font-family: 'Inter', 'sans-serif';
+  font-style: normal;
+  font-weight: 700;
+  font-size: $fz;
+  line-height: $lh;
+  color: $color;
+}
+@mixin InterLight($fz,$color,$lh) {
+  font-family: 'Inter', 'sans-serif';
+  font-style: normal;
+  font-weight: 300;
+  font-size: $fz;
+  line-height: $lh;
+  color: $color;
+}
+
+@mixin InterRegular($fz,$color,$lh) {
+  font-family: 'Inter', 'sans-serif';
+  font-style: normal;
+  font-weight: 400;
+  font-size: $fz;
+  line-height: $lh;
+  color: $color;
+}
+@mixin InterMedium($fz,$color,$lh) {
+  font-family: 'Inter', 'sans-serif';
+  font-style: normal;
+  font-weight: 500;
+  font-size: $fz;
+  line-height: $lh;
+  color: $color;
+}
