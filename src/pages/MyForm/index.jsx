@@ -146,6 +146,7 @@ return(
           Mobile Phone Number <span className="text-red-600">*</span>
         </label>
                         <PhoneInput
+                     enableSearch={true}
                     enableAreaCodes={true}
                     country={countryCode}
                     value={phone}
