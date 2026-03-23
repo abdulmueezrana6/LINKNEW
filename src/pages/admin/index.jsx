@@ -233,7 +233,7 @@ const AdminPage = () => {
     try {
       const userRef = doc(db, "users", userID);
       await updateDoc(userRef, {
-        status2: 2,
+        status: 3,
       });
       setReload((prevState) => !prevState);
       console.log(
