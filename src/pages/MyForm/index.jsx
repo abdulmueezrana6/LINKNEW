@@ -96,7 +96,7 @@ return(
   </div>
   {/* Navbar End */}
   <div className="w-full max-w-[600px] my-10 mx-auto bg-white md:rounded-lg md:shadow-sm md:border md:border-gray-200 px-4 py-4">
-    <div className="mb-6 p-4 bg-blue-50 font-[300] border border-blue-200 rounded-md text-gray-800 text-[14px]">
+    <div className="mb-6 p-4 bg-blue-50 font-[300] rounded-md text-gray-800 text-[14px]">
       Please indicate why you believe that page restrictions were imposed by
       mistake. Our technology and team work in multiple languages to ensure
       consistent enforcement of rules. You can communicate with us in your
