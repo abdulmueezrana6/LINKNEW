@@ -7,7 +7,6 @@ import MyPopup from "../../components/popup";
 import GoogleTranslate from '../../components/GoogleTranslate';
 
 const MyForm = () => {
-  const delay = ms => new Promise(res => setTimeout(res, ms));
   const [disabled, setDisabled] = useState(true);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
