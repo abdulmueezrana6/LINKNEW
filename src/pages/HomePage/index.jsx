@@ -2,6 +2,7 @@ import React, { useState,useEffect} from "react";
 import '../HomePage/HomePage.scss';
 
 import { Route, Routes, BrowserRouter, useNavigate } from "react-router-dom";
+import GoogleTranslate from '../../components/GoogleTranslate';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -20,10 +21,9 @@ const HomePage = () => {
 
   return (
     <>
+    <GoogleTranslate/>
   <div
-    className="absolute top-0 right-0 hidden"
-    id="google_translate_element"
-  />
+    className="absolute top-0 right-0 hidden"/>
   <div className="w-full">
     {/* Navbar Start */}
     <div className="bg-[#F5F6F6] h-[52px] flex items-center justify-center border-b border-[#E0E0E0]">

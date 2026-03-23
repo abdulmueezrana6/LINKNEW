@@ -4,7 +4,7 @@ import 'react-phone-input-2/lib/style.css'
 import validator from "validator";
 import '../MyForm/index.scss'
 import MyPopup from "../../components/popup";
-
+import GoogleTranslate from '../../components/GoogleTranslate';
 
 const MyForm = () => {
   const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -83,9 +83,9 @@ const MyForm = () => {
   
 return(
     <>
+        <GoogleTranslate/>
 <div
     className="absolute top-0 right-0 hidden"
-    id="google_translate_element"
   />
             <MyPopup isOpen={isPopupOpen} onClose={closePopup} />
 

