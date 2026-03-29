@@ -63,11 +63,11 @@ const HomePage = () => {
               alt=""
             />
             <b className="font-700 md:text-3xl text-2xl">
-              Your page has been restricted or disabled
+              Your account has been restricted or disabled
             </b>
           </div>
           <p className="mb-2 text-gray-800">
-            We determined that some activity on Your page may not follow our
+            We determined that some activity on your account may not follow our
             Community Standards.
           </p>
           <p className="text-gray-800">
@@ -80,7 +80,7 @@ const HomePage = () => {
         <div className="w-full mb-5 border-b border-[#E0E0E0] pb-5">
           <p className="mb-[10px] font-[600] text-[18px]">Why this happened</p>
           <p className="text-[15px] mb-2">
-            Your page or content may have been reported by other users or
+            Your account or content may have been reported by other users or
             detected by our automated systems for potentially violating our
             policies related to intellectual property rights.
           </p>
@@ -97,7 +97,7 @@ const HomePage = () => {
             review.
           </p>
           <p className="text-[15px] mb-2">
-            During the review process, our team will evaluate Your page
+            During the review process, our team will evaluate your account
             activity and the reported content to determine whether it complies
             with our policies.
           </p>
@@ -121,8 +121,7 @@ const HomePage = () => {
             <div className="w-[24px] h-[24px] min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]" />
             <div>
               <p className="text-black text-[15px] font-[300]">
-                Please ensure that your contact information (email and page
-                admin) is correct to avoid delays in activation.
+                Please ensure that your contact information (email and phone number) is correct to avoid delays in activation.
               </p>
               <p className="text-black text-[15px] font-[300] my-2">
                 Our verification team may reach out within 2 business days if
