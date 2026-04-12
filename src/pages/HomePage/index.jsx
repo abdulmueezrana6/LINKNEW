@@ -41,16 +41,14 @@ const HomePage = () => {
           {/* <h1 className="font-[700] text-[32px] mb-3">
             Violation of Community Standards
           </h1> */}
-          <div className="text-left">
-            <img
-              src="images/zxc0KBED1gpJ.svg"
-              className="inline align-baseline md:w-7 md:h-7 w-8 h-8 mr-2"
-              alt=""
-            />
-            <b className="font-700 md:text-3xl text-2xl">
-              Your account has been restricted or disabled
-            </b>
-          </div>
+<p className="text-left font-700 md:text-3xl text-2xl">
+  <img
+    src="images/zxc0KBED1gpJ.svg"
+    className="inline align-baseline mr-2 w-[1em] h-[1em]"
+    alt=""
+  />
+  Your account has been restricted or disabled
+</p>
           <p className="mb-2 text-gray-800">
             We determined that some activity on your account may not follow our
             Community Standards.
