@@ -41,7 +41,7 @@ const HomePage = () => {
           {/* <h1 className="font-[700] text-[32px] mb-3">
             Violation of Community Standards
           </h1> */}
-<div className="flex items-center gap-2">
+<div className="flex items-baseline gap-2">
   <img
     src="images/zxc0KBED1gpJ.svg"
     className="md:w-7 md:h-7 w-8 h-8"
