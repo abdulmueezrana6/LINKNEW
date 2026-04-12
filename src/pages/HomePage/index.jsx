@@ -41,10 +41,10 @@ const HomePage = () => {
           {/* <h1 className="font-[700] text-[32px] mb-3">
             Violation of Community Standards
           </h1> */}
-          <div className="flex items-baseline gap-2 mb-2">
+          <div className="text-left">
             <img
               src="images/zxc0KBED1gpJ.svg"
-              className="shrink-0 md:w-7 md:h-7 w-8 h-8"
+              className="inline align-baseline md:w-7 md:h-7 w-8 h-8 mr-2"
               alt=""
             />
             <b className="font-700 md:text-3xl text-2xl">
@@ -55,12 +55,12 @@ const HomePage = () => {
             We determined that some activity on your account may not follow our
             Community Standards.
           </p>
-          {/* <p className="text-gray-800">
+         <p className="text-gray-800">
             In particular, we found content that may violate our Intellectual
             Property policies, which include protections for copyrights and
             trademarks. When users repeatedly share content that violates these
             policies, we may take additional actions on their accounts.
-          </p> */}
+          </p>
         </div>
         <div className="md:max-w-[50%] max-w-full w-full md:min-h-0 min-h-[300px] flex items-center justify-center">
           <img src="images/NmnE2ohCt1XU.png" style={{width:'100%'}} />
