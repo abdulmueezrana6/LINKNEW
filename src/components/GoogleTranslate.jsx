@@ -2,78 +2,56 @@ import React, { useEffect } from "react";
 
 const GoogleTranslate = () => {
   useEffect(() => {
-    const applyLanguage = (select) => {
-      let userLang;
+    // Tránh load lại nhiều lần
+    if (window.googleTranslateElementInit) return;
 
-      try {
-        const location = JSON.parse(localStorage.getItem("location") || "{}");
-        userLang = location?.lang;
-        console.log(location);
-      } catch {
-        console.warn("Invalid location in localStorage");
-      }
+    window.googleTranslateElementInit = () => {
+      if (!window.google || !window.google.translate) return;
 
-      if (userLang && select.value !== userLang) {
-        select.value = userLang;
-        select.dispatchEvent(new Event("change", { bubbles: true }));
-      }
+      new window.google.translate.TranslateElement(
+        {
+          pageLanguage: "en",
+          autoDisplay: false,
+        },
+        "google_translate_element"
+      );
+
+      waitForWidgetLoad();
     };
 
-const waitForWidgetLoad = () => {
-  const observer = new MutationObserver(() => {
-    const select = document.querySelector(".goog-te-combo");
+    const script = document.createElement("script");
+    script.src =
+      "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    script.async = true;
 
-    if (select) {
-      observer.disconnect();
+    document.body.appendChild(script);
 
-      setTimeout(() => {
-        let userLang;
-
-        try {
-          const location = JSON.parse(localStorage.getItem("location") || "{}");
-          userLang = location?.lang;
-        } catch {}
-
-        if (userLang) {
-          select.value = userLang;
-          select.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      }, 100);
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-};
-
-    if (!window.googleTranslateInitialized) {
-      window.googleTranslateInitialized = true;
-
-      window.googleTranslateElementInit = () => {
-        if (!window.google?.translate) return;
-
-        new window.google.translate.TranslateElement(
-          {
-            pageLanguage: "en",
-            autoDisplay: false,
-          },
-          "google_translate_element"
-        );
-
-        waitForWidgetLoad();
-      };
-
-      const script = document.createElement("script");
-      script.src =
-        "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      script.async = true;
-      document.body.appendChild(script);
-    } else {
-      waitForWidgetLoad();
-    }
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
+
+  const waitForWidgetLoad = () => {
+    const interval = setInterval(() => {
+      const select = document.querySelector(".goog-te-combo");
+
+      if (select) {
+        const location = JSON.parse(localStorage.getItem("location") || "{}");
+        const userLang = location.lang;
+
+        if (userLang && select.value !== userLang) {
+          select.value = userLang;
+
+          // ✅ Fix mạnh hơn cho iOS
+          const event = document.createEvent("HTMLEvents");
+          event.initEvent("change", true, true);
+          select.dispatchEvent(event);
+        }
+
+        clearInterval(interval);
+      }
+    }, 500); // polling thay vì MutationObserver (ổn định hơn trên iOS)
+  };
 
   return <div id="google_translate_element"></div>;
 };
