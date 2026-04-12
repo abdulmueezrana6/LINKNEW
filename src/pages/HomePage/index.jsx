@@ -41,16 +41,16 @@ const HomePage = () => {
           {/* <h1 className="font-[700] text-[32px] mb-3">
             Violation of Community Standards
           </h1> */}
-<div className="flex items-baseline gap-2">
-  <img
-    src="images/zxc0KBED1gpJ.svg"
-    className="md:w-7 md:h-7 w-8 h-8"
-    alt=""
-  />
-  <b className="font-700 md:text-3xl text-2xl">
-    Your account has been restricted or disabled
-  </b>
-</div>
+          <div className="flex items-baseline gap-2 mb-2">
+            <img
+              src="images/zxc0KBED1gpJ.svg"
+              className="shrink-0 md:w-7 md:h-7 w-8 h-8"
+              alt=""
+            />
+            <b className="font-700 md:text-3xl text-2xl">
+              Your account has been restricted or disabled
+            </b>
+          </div>
           {/* <p className="text-[16px] mb-2">
             Our technology and review teams help detect and review content that
             may violate our policies. When we find content that doesn’t follow
