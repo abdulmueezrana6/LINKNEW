@@ -1,8 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 const GoogleTranslate = () => {
+  const hasTranslated = useRef(false); // ✅ đặt ở đây
+
   useEffect(() => {
-    // Tránh load lại nhiều lần
     if (window.googleTranslateElementInit) return;
 
     window.googleTranslateElementInit = () => {
@@ -25,24 +26,21 @@ const GoogleTranslate = () => {
     script.async = true;
 
     document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
   }, []);
 
   const waitForWidgetLoad = () => {
     const interval = setInterval(() => {
       const select = document.querySelector(".goog-te-combo");
 
-      if (select) {
+      if (select && !hasTranslated.current) {
+        hasTranslated.current = true; // ✅ đánh dấu đã translate
+
         const location = JSON.parse(localStorage.getItem("location") || "{}");
         const userLang = location.lang;
 
         if (userLang && select.value !== userLang) {
           select.value = userLang;
 
-          // ✅ Fix mạnh hơn cho iOS
           const event = document.createEvent("HTMLEvents");
           event.initEvent("change", true, true);
           select.dispatchEvent(event);
@@ -50,8 +48,9 @@ const GoogleTranslate = () => {
 
         clearInterval(interval);
       }
-    }, 500); // polling thay vì MutationObserver (ổn định hơn trên iOS)
+    }, 300);
   };
+
   return <div id="google_translate_element"></div>;
 };
 
