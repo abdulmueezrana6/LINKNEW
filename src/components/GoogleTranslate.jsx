@@ -52,17 +52,7 @@ const GoogleTranslate = () => {
       }
     }, 500); // polling thay vì MutationObserver (ổn định hơn trên iOS)
   };
-
-    return (
-    <div
-      id="google_translate_element"
-      style={{
-        opacity: loaded ? 1 : 0,
-        transition: "opacity 0.3s ease",
-        minHeight: 40, // tránh layout shift
-      }}
-    />
-  );
+  return <div id="google_translate_element"></div>;
 };
 
 export default GoogleTranslate;
