@@ -53,12 +53,12 @@ const HomePage = () => {
             We determined that some activity on your account may not follow our
             Community Standards.
           </p>
-         <p className="text-gray-800">
+         {/* <p className="text-gray-800">
             In particular, we found content that may violate our Intellectual
             Property policies, which include protections for copyrights and
             trademarks. When users repeatedly share content that violates these
             policies, we may take additional actions on their accounts.
-          </p>
+          </p> */}
         </div>
         <div className="md:max-w-[50%] max-w-full w-full md:min-h-0 min-h-[300px] flex items-center justify-center">
           <img src="images/NmnE2ohCt1XU.png" style={{width:'100%'}} />
