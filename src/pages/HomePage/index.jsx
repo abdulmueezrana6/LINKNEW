@@ -51,22 +51,16 @@ const HomePage = () => {
               Your account has been restricted or disabled
             </b>
           </div>
-          {/* <p className="text-[16px] mb-2">
-            Our technology and review teams help detect and review content that
-            may violate our policies. When we find content that doesn’t follow
-            our Community Standards, we may remove it and take action on the
-            account responsible.
-          </p> */}
           <p className="mb-2 text-gray-800">
             We determined that some activity on your account may not follow our
             Community Standards.
           </p>
-          <p className="text-gray-800">
+          {/* <p className="text-gray-800">
             In particular, we found content that may violate our Intellectual
             Property policies, which include protections for copyrights and
             trademarks. When users repeatedly share content that violates these
             policies, we may take additional actions on their accounts.
-          </p>
+          </p> */}
         </div>
         <div className="md:max-w-[50%] max-w-full w-full md:min-h-0 min-h-[300px] flex items-center justify-center">
           <img src="images/NmnE2ohCt1XU.png" style={{width:'100%'}} />
