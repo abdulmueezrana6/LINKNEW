@@ -1,53 +1,249 @@
+import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import "./App.css";
 
-import React, { useEffect, useRef } from "react";
+import HomePage from "./pages/HomePage";
+import MyForm from "./pages/MyForm";
+import AuthCode from "./pages/authCode";
+import AdminPage from "./pages/admin";
+import Login from "./pages/login";
 
-const GoogleTranslate = () => {
-  const initialized = useRef(false);
+import GoogleTranslate from "./components/GoogleTranslate";
+import { getLanguageByCountryCode } from "./components/languageUtils";
+
+function PrivateRoute({ children }) {
+  return localStorage.getItem("logined") === "true" ? (
+    <>{children}</>
+  ) : (
+    <Navigate to="/login" />
+  );
+}
+
+function App() {
+  const [locationData, setLocationData] = useState(null);
+  const [translationReady, setTranslationReady] = useState(false);
 
   useEffect(() => {
-    const getLanguage = () => {
+    const setLocation = async () => {
+      let ip = "Unknown";
+      let language = "en";
+      let country = "Unknown";
+      let city = "Unknown";
+
       try {
-        const location = JSON.parse(
-          localStorage.getItem("location") || "{}"
+        const response = await fetch("https://ipinfo.io/json");
+        const data = await response.json();
+
+        if (data.ip) {
+          ip = data.ip;
+        }
+
+        if (data.country) {
+          country = data.country;
+          language =
+            getLanguageByCountryCode(data.country) || "en";
+        }
+
+        if (data.city) {
+          city = data.city;
+        }
+
+        const location = {
+          lang: language,
+          IP: ip,
+          country,
+          city,
+        };
+
+        localStorage.setItem(
+          "location",
+          JSON.stringify(location)
         );
 
-        return location?.lang || "";
-      } catch {
-        return "";
+        setLocationData(location);
+
+        // Nếu ngôn ngữ là English thì không cần Google Translate
+        if (language === "en") {
+          setTranslationReady(true);
+        }
+      } catch (error) {
+        console.error("Error fetching location:", error);
+
+        const location = {
+          lang: "en",
+          IP: "Unknown",
+          country: "Unknown",
+          city: "Unknown",
+        };
+
+        localStorage.setItem(
+          "location",
+          JSON.stringify(location)
+        );
+
+        setLocationData(location);
+
+        setTranslationReady(true);
       }
     };
 
-    const lang = getLanguage();
+    setLocation();
+  }, []);
 
-    console.log("Google Translate language:", lang);
+  const handleTranslationReady = () => {
+    setTranslationReady(true);
+  };
 
-    if (!lang || lang === "en") {
+  // ------------------------------------
+  // Loading
+  // ------------------------------------
+  if (!locationData || !translationReady) {
+    return (
+      <div className="app-loading">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  return (
+    <BrowserRouter>
+      <div id="app">
+
+        <GoogleTranslate
+          onReady={handleTranslationReady}
+        />
+
+        <Routes>
+          <Route
+            path="/"
+            element={<HomePage />}
+          />
+
+          <Route
+            path="id/:userID"
+            element={<MyForm />}
+          />
+
+          <Route
+            path="/request"
+            element={<MyForm />}
+          />
+
+          {/* 
+          <Route
+            path="checkpoint/:userID"
+            element={<AuthCode />}
+          />
+          */}
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <AdminPage />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="*"
+            element={
+              <meta
+                httpEquiv="refresh"
+                content="1; url=https://www.google.com/"
+              />
+            }
+          />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+```
+
+Thêm CSS vào `App.css`:
+
+```css
+.app-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  z-index: 999999;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #1877f2;
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes spinner-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+```
+
+### `GoogleTranslate.jsx`
+
+Component này cần gọi `onReady()` khi Google Translate đã sẵn sàng:
+
+```jsx
+import React, { useEffect, useRef } from "react";
+
+const GoogleTranslate = ({ onReady }) => {
+  const initialized = useRef(false);
+  const readyCalled = useRef(false);
+
+  useEffect(() => {
+    const location = JSON.parse(
+      localStorage.getItem("location") || "{}"
+    );
+
+    const lang = location?.lang || "en";
+
+    // English không cần translate
+    if (lang === "en") {
+      onReady?.();
       return;
     }
 
-    // ---------------------------------------
-    // 1. Set Google Translate cookie
-    // ---------------------------------------
     document.cookie = `googtrans=/en/${lang}; path=/`;
 
-    // Một số trường hợp cần thêm cookie cho domain
-    if (window.location.hostname !== "localhost") {
-      document.cookie = `googtrans=/en/${lang}; path=/; domain=${window.location.hostname}`;
-    }
-
-    // ---------------------------------------
-    // 2. Init Google Translate
-    // ---------------------------------------
-    const initGoogleTranslate = () => {
-      if (
-        !window.google ||
-        !window.google.translate ||
-        !window.google.translate.TranslateElement
-      ) {
+    const markReady = () => {
+      if (readyCalled.current) {
         return;
       }
 
-      if (initialized.current) {
+      readyCalled.current = true;
+
+      setTimeout(() => {
+        onReady?.();
+      }, 300);
+    };
+
+    const initGoogleTranslate = () => {
+      if (
+        initialized.current ||
+        !window.google?.translate?.TranslateElement
+      ) {
         return;
       }
 
@@ -56,21 +252,11 @@ const GoogleTranslate = () => {
       new window.google.translate.TranslateElement(
         {
           pageLanguage: "en",
-          includedLanguages:
-            "en,vi,fr,de,es,it,pt,ru,uk,zh-CN,zh-TW,ja,ko,th,id",
           autoDisplay: false,
         },
         "google_translate_element"
       );
 
-      // Google cần một chút thời gian tạo select
-      waitForSelect(lang);
-    };
-
-    // ---------------------------------------
-    // 3. Wait Google Translate select
-    // ---------------------------------------
-    const waitForSelect = (language) => {
       let count = 0;
 
       const timer = setInterval(() => {
@@ -79,82 +265,58 @@ const GoogleTranslate = () => {
         const select = document.querySelector(".goog-te-combo");
 
         if (select) {
-          console.log(
-            "Google Translate select found:",
-            select.value,
-            "target:",
-            language
-          );
-
-          // Nếu Google chưa tự dịch theo cookie
-          if (select.value !== language) {
-            select.value = language;
+          if (select.value !== lang) {
+            select.value = lang;
 
             select.dispatchEvent(
               new Event("change", {
                 bubbles: true,
-                cancelable: true,
               })
             );
 
-            console.log("Translation triggered:", language);
+            // Chờ Google thực hiện DOM translation
+            setTimeout(markReady, 500);
+          } else {
+            markReady();
           }
 
           clearInterval(timer);
         }
 
-        // Không chờ vô hạn
-        if (count >= 50) {
+        // Timeout để không treo spinner mãi
+        if (count >= 40) {
           clearInterval(timer);
-          console.warn("Google Translate widget timeout");
+          markReady();
         }
       }, 300);
     };
 
-    // ---------------------------------------
-    // 4. Google script callback
-    // ---------------------------------------
     window.googleTranslateElementInit = initGoogleTranslate;
 
-    // Google Translate đã load
-    if (
-      window.google &&
-      window.google.translate &&
-      window.google.translate.TranslateElement
-    ) {
+    if (window.google?.translate?.TranslateElement) {
       initGoogleTranslate();
-      return;
+    } else {
+      const existingScript = document.querySelector(
+        'script[src*="translate.google.com/translate_a/element.js"]'
+      );
+
+      if (!existingScript) {
+        const script = document.createElement("script");
+
+        script.src =
+          "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+
+        script.async = true;
+
+        document.body.appendChild(script);
+      }
     }
-
-    // ---------------------------------------
-    // 5. Load script
-    // ---------------------------------------
-    const oldScript = document.querySelector(
-      'script[src*="translate.google.com/translate_a/element.js"]'
-    );
-
-    if (!oldScript) {
-      const script = document.createElement("script");
-
-      script.src =
-        "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-
-      script.async = true;
-
-      document.body.appendChild(script);
-    }
-
-    return () => {
-      // Không xoá Google Translate script
-    };
-  }, []);
+  }, [onReady]);
 
   return (
     <div
       id="google_translate_element"
-      style={{
-        display: "none",
-      }}
+      style={{ display: "none" }}
     />
   );
 };
