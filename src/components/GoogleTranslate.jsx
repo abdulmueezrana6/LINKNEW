@@ -188,7 +188,7 @@ const GoogleTranslate = ({ targetLanguage, onReady }) => {
 
         finish();
       }
-    }, 8000);
+    }, 3000);
 
     return () => {
       if (interval) {
