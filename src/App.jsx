@@ -1,5 +1,16 @@
-import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import {
+  Route,
+  Routes,
+  BrowserRouter,
+  Navigate,
+} from "react-router-dom";
+
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
 import "./App.css";
 
 import HomePage from "./pages/HomePage";
@@ -9,28 +20,50 @@ import AdminPage from "./pages/admin";
 import Login from "./pages/login";
 
 import GoogleTranslate from "./components/GoogleTranslate";
-import { getLanguageByCountryCode } from "./components/languageUtils";
+import {
+  getLanguageByCountryCode,
+} from "./components/languageUtils";
+
 
 function PrivateRoute({ children }) {
   return localStorage.getItem("logined") === "true" ? (
     <>{children}</>
   ) : (
-    <Navigate to="/login" />
+    <Navigate to="/login" replace />
   );
 }
 
+
 function App() {
-  const [locationData, setLocationData] = useState(null);
-  const [translationLoading, setTranslationLoading] = useState(true);
+  const [locationData, setLocationData] =
+    useState(null);
+
+  const [translationLoading, setTranslationLoading] =
+    useState(true);
+
 
   useEffect(() => {
+    let cancelled = false;
+
     const setLocation = async () => {
       try {
-        const response = await fetch("https://ipinfo.io/json");
+        const response = await fetch(
+          "https://ipinfo.io/json"
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `HTTP ${response.status}`
+          );
+        }
+
         const data = await response.json();
 
-        const country = data.country || "Unknown";
-        const language = getLanguageByCountryCode(country) || "en";
+        const country =
+          data.country || "Unknown";
+
+        const language =
+          getLanguageByCountryCode(country) || "en";
 
         const location = {
           lang: language,
@@ -39,15 +72,26 @@ function App() {
           city: data.city || "Unknown",
         };
 
-        localStorage.setItem("location", JSON.stringify(location));
+        localStorage.setItem(
+          "location",
+          JSON.stringify(location)
+        );
+
+        if (cancelled) return;
+
         setLocationData(location);
 
-        // English không cần Google Translate
+        /*
+         * English không cần Google Translate.
+         */
         if (language === "en") {
           setTranslationLoading(false);
         }
       } catch (error) {
-        console.error("Location error:", error);
+        console.error(
+          "Location error:",
+          error
+        );
 
         const location = {
           lang: "en",
@@ -56,46 +100,59 @@ function App() {
           city: "Unknown",
         };
 
-        localStorage.setItem("location", JSON.stringify(location));
+        localStorage.setItem(
+          "location",
+          JSON.stringify(location)
+        );
+
+        if (cancelled) return;
+
         setLocationData(location);
         setTranslationLoading(false);
       }
     };
 
     setLocation();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleTranslationReady = () => {
-    // Cho browser có thời gian paint UI đã dịch
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setTranslationLoading(false);
-      });
-    });
-  };
 
-  // Chưa lấy được location
+  /*
+   * QUAN TRỌNG:
+   * useCallback để function không bị tạo lại
+   * mỗi lần App render.
+   */
+  const handleTranslationReady = useCallback(() => {
+    setTranslationLoading(false);
+  }, []);
+
+
+  /*
+   * Chưa lấy được location
+   */
   if (!locationData) {
     return (
       <div className="app-loading">
-        <div className="spinner"></div>
+        <div className="spinner" />
       </div>
     );
   }
 
+
   return (
     <>
-      {/* App loading overlay */}
       {translationLoading && (
         <div className="app-loading">
-          <div className="spinner"></div>
+          <div className="spinner" />
         </div>
       )}
 
       <BrowserRouter>
         <div id="app">
 
-          {/* Google Translate */}
           {locationData.lang !== "en" && (
             <GoogleTranslate
               targetLanguage={locationData.lang}
@@ -104,6 +161,7 @@ function App() {
           )}
 
           <Routes>
+
             <Route
               path="/"
               element={<HomePage />}
@@ -143,17 +201,19 @@ function App() {
             <Route
               path="*"
               element={
-                <meta
-                  httpEquiv="refresh"
-                  content="1; url=https://www.google.com/"
+                <Navigate
+                  to="/"
+                  replace
                 />
               }
             />
+
           </Routes>
         </div>
       </BrowserRouter>
     </>
   );
 }
+
 
 export default App;
