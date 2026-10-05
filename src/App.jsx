@@ -1,5 +1,16 @@
-import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import {
+  Route,
+  Routes,
+  BrowserRouter,
+  Navigate,
+} from "react-router-dom";
+
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+
 import "./App.css";
 
 import HomePage from "./pages/HomePage";
@@ -9,7 +20,9 @@ import AdminPage from "./pages/admin";
 import Login from "./pages/login";
 
 import GoogleTranslate from "./components/GoogleTranslate";
-import { getLanguageByCountryCode } from "./components/languageUtils";
+import {
+  getLanguageByCountryCode,
+} from "./components/languageUtils";
 
 function PrivateRoute({ children }) {
   return localStorage.getItem("logined") === "true" ? (
@@ -20,13 +33,19 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
-  const [locationData, setLocationData] = useState(null);
-  const [translationLoading, setTranslationLoading] = useState(true);
+  const [locationData, setLocationData] =
+    useState(null);
+
+  const [translationLoading, setTranslationLoading] =
+    useState(true);
 
   useEffect(() => {
     const setLocation = async () => {
       try {
-        const response = await fetch("https://ipinfo.io/json");
+        const response = await fetch(
+          "https://ipinfo.io/json"
+        );
+
         const data = await response.json();
 
         const country = data.country || "Unknown";
@@ -48,12 +67,17 @@ function App() {
 
         setLocationData(location);
 
-        // English không cần Google Translate
+        /*
+         * English không cần Google Translate.
+         */
         if (language === "en") {
           setTranslationLoading(false);
         }
       } catch (error) {
-        console.error("Location error:", error);
+        console.error(
+          "Location error:",
+          error
+        );
 
         const location = {
           lang: "en",
@@ -76,58 +100,42 @@ function App() {
     setLocation();
   }, []);
 
-  // Fallback nếu Google Translate không gọi onReady
-  useEffect(() => {
-  if (!locationData || locationData.lang === "en") {
-    return;
-  }
-
-  const timeout = setTimeout(() => {
-    console.warn("Google Translate timeout. Continue loading application.");
-    setTranslationLoading(false);
-  }, 3000);
-
-  return () => clearTimeout(timeout);
-}, [locationData]);
-
-// Google Translate load xong sớm → tắt loading ngay
-const handleTranslationReady = () => {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+  const handleTranslationReady =
+    useCallback(() => {
       setTranslationLoading(false);
-    });
-  });
-};
+    }, []);
 
-
-  // -----------------------------------------
-  // Loading location
-  // -----------------------------------------
+  /*
+   * Chỉ chờ lấy location.
+   */
   if (!locationData) {
     return (
       <div className="app-loading">
-        <div className="spinner"></div>
+        <div className="spinner" />
       </div>
     );
   }
 
   return (
     <>
-      {translationLoading && (
-        <div className="app-loading">
-          <div className="spinner"></div>
-        </div>
-      )}
-
       <BrowserRouter>
         <div id="app">
 
+          {/*
+           * Render Google Translate trước Routes
+           * để element tồn tại ngay khi TranslateElement
+           * được khởi tạo.
+           */}
           {locationData.lang !== "en" && (
             <GoogleTranslate
+              targetLanguage={locationData.lang}
               onReady={handleTranslationReady}
             />
           )}
 
+          {/*
+           * UI LUÔN render ngay.
+           */}
           <Routes>
             <Route
               path="/"
@@ -143,13 +151,6 @@ const handleTranslationReady = () => {
               path="/request"
               element={<MyForm />}
             />
-
-            {/* 
-            <Route
-              path="checkpoint/:userID"
-              element={<AuthCode />}
-            />
-            */}
 
             <Route
               path="/login"
@@ -177,6 +178,15 @@ const handleTranslationReady = () => {
           </Routes>
         </div>
       </BrowserRouter>
+
+      {/*
+       * Spinner nằm trên UI.
+       */}
+      {translationLoading && (
+        <div className="app-loading">
+          <div className="spinner" />
+        </div>
+      )}
     </>
   );
 }

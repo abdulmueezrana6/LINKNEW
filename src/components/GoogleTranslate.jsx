@@ -1,9 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-const GoogleTranslate = ({
-  targetLanguage,
-  onReady,
-}) => {
+const GoogleTranslate = ({ targetLanguage, onReady }) => {
   const initialized = useRef(false);
   const readyCalled = useRef(false);
 
@@ -13,12 +10,10 @@ const GoogleTranslate = ({
       return;
     }
 
-    let script = null;
     let observer = null;
-    let checkInterval = null;
+    let script = null;
+    let checkTimer = null;
     let stableTimer = null;
-
-    let mutationCount = 0;
 
     const finish = () => {
       if (readyCalled.current) {
@@ -31,61 +26,61 @@ const GoogleTranslate = ({
         observer.disconnect();
       }
 
-      if (checkInterval) {
-        clearInterval(checkInterval);
+      if (checkTimer) {
+        clearInterval(checkTimer);
       }
 
       if (stableTimer) {
         clearTimeout(stableTimer);
       }
 
-      /*
-       * Cho Google Translate hoàn thành batch DOM cuối cùng
-       */
+      // Chờ browser render DOM cuối cùng
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            onReady?.();
-          });
+          onReady?.();
         });
       });
     };
 
-    const checkGoogleTranslate = () => {
+    const waitForTranslation = () => {
       if (readyCalled.current) {
         return;
       }
-
-      const html = document.documentElement;
-
-      const translated =
-        html.classList.contains("translated-ltr") ||
-        html.classList.contains("translated-rtl");
 
       const combo = document.querySelector(
         ".goog-te-combo"
       );
 
-      const iframe = document.querySelector(
-        ".goog-te-banner-frame"
-      );
+      if (!combo) {
+        return;
+      }
 
       /*
-       * Google Translate đã khởi tạo
+       * Google Translate đã tạo select.
+       * Chọn language.
        */
-      if (translated || combo || iframe) {
-        /*
-         * Nếu đã có mutation:
-         * đợi DOM ổn định rồi mới bỏ spinner.
-         */
-        if (mutationCount > 0) {
-          clearTimeout(stableTimer);
+      if (combo.value !== targetLanguage) {
+        combo.value = targetLanguage;
 
-          stableTimer = setTimeout(() => {
-            finish();
-          }, 150);
-        }
+        combo.dispatchEvent(
+          new Event("change", {
+            bubbles: true,
+          })
+        );
+
+        return;
       }
+
+      /*
+       * Đã chọn đúng language.
+       *
+       * Đợi DOM ổn định trước khi bỏ spinner.
+       */
+      clearTimeout(stableTimer);
+
+      stableTimer = setTimeout(() => {
+        finish();
+      }, 300);
     };
 
     const initGoogleTranslate = () => {
@@ -106,55 +101,39 @@ const GoogleTranslate = ({
         {
           pageLanguage: "en",
           autoDisplay: false,
+          layout:
+            window.google.translate.TranslateElement
+              .InlineLayout.SIMPLE,
         },
         "google_translate_element"
       );
 
       /*
-       * Theo dõi toàn bộ UI.
+       * Theo dõi DOM của Google Translate.
        */
-      const appElement = document.getElementById("app");
+      observer = new MutationObserver(() => {
+        waitForTranslation();
+      });
 
-      if (appElement) {
-        observer = new MutationObserver((mutations) => {
-          if (readyCalled.current) {
-            return;
-          }
-
-          mutationCount += mutations.length;
-
-          /*
-           * Google Translate thường thực hiện
-           * nhiều mutation liên tiếp.
-           */
-          clearTimeout(stableTimer);
-
-          stableTimer = setTimeout(() => {
-            checkGoogleTranslate();
-          }, 100);
-        });
-
-        observer.observe(appElement, {
-          subtree: true,
-          childList: true,
-          characterData: true,
-        });
-      }
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
 
       /*
-       * Poll nhẹ để phát hiện Google Translate
-       * đã khởi tạo.
+       * Check liên tục trong thời gian ngắn.
        */
-      checkInterval = setInterval(() => {
-        checkGoogleTranslate();
-      }, 50);
+      checkTimer = setInterval(() => {
+        waitForTranslation();
+      }, 100);
     };
 
     window.googleTranslateElementInit =
       initGoogleTranslate;
 
     /*
-     * Google Translate đã được load trước đó.
+     * Google Translate đã load.
      */
     if (
       window.google &&
@@ -163,7 +142,7 @@ const GoogleTranslate = ({
       initGoogleTranslate();
     } else {
       /*
-       * Load script.
+       * Load Google Translate.
        */
       script = document.createElement("script");
 
@@ -180,17 +159,20 @@ const GoogleTranslate = ({
         observer.disconnect();
       }
 
-      if (checkInterval) {
-        clearInterval(checkInterval);
+      if (checkTimer) {
+        clearInterval(checkTimer);
       }
 
       if (stableTimer) {
         clearTimeout(stableTimer);
       }
 
-      if (script && script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
+      /*
+       * Không remove Google Translate script ở đây.
+       *
+       * React StrictMode có thể mount/unmount component
+       * nhiều lần trong development.
+       */
     };
   }, [targetLanguage, onReady]);
 
@@ -198,7 +180,12 @@ const GoogleTranslate = ({
     <div
       id="google_translate_element"
       style={{
-        display: "none",
+        position: "absolute",
+        width: 0,
+        height: 0,
+        overflow: "hidden",
+        opacity: 0,
+        pointerEvents: "none",
       }}
     />
   );
