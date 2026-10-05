@@ -76,30 +76,24 @@ function App() {
     setLocation();
   }, []);
 
-  // -----------------------------------------
-  // Không cho spinner chạy vô hạn
-  // -----------------------------------------
+  // Fallback nếu Google Translate không gọi onReady
   useEffect(() => {
-    if (!locationData || locationData.lang === "en") {
-      return;
-    }
+  if (!locationData || locationData.lang === "en") {
+    return;
+  }
 
-    const timeout = setTimeout(() => {
-      console.warn(
-        "Google Translate timeout. Continue loading application."
-      );
-
-      setTranslationLoading(false);
-    }, 3000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [locationData]);
-
-  const handleTranslationReady = () => {
+  const timeout = setTimeout(() => {
+    console.warn("Google Translate timeout. Continue loading application.");
     setTranslationLoading(false);
-  };
+  }, 3000);
+
+  return () => clearTimeout(timeout);
+}, [locationData]);
+
+// Google Translate load xong sớm → tắt loading ngay
+const handleTranslationReady = () => {
+  setTranslationLoading(false);
+};
 
   // -----------------------------------------
   // Loading location
