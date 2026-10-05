@@ -92,8 +92,13 @@ function App() {
 
 // Google Translate load xong sớm → tắt loading ngay
 const handleTranslationReady = () => {
-  setTranslationLoading(false);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      setTranslationLoading(false);
+    });
+  });
 };
+
 
   // -----------------------------------------
   // Loading location
