@@ -1,56 +1,48 @@
 import React, { useEffect, useRef } from "react";
 
 const GoogleTranslate = ({ onReady }) => {
-  const initializedRef = useRef(false);
-  const readyRef = useRef(false);
+  const initialized = useRef(false);
+  const finished = useRef(false);
 
   useEffect(() => {
-    let interval = null;
-    let fallback = null;
+    let interval;
+    let timeout;
 
-    const ready = () => {
-      if (readyRef.current) return;
-
-      readyRef.current = true;
-
-      if (interval) {
-        clearInterval(interval);
-        interval = null;
+    const finish = () => {
+      if (finished.current) {
+        return;
       }
 
-      if (fallback) {
-        clearTimeout(fallback);
-        fallback = null;
-      }
+      finished.current = true;
+
+      clearInterval(interval);
+      clearTimeout(timeout);
 
       onReady?.();
     };
 
-    const getLanguage = () => {
-      try {
-        const location = JSON.parse(
-          localStorage.getItem("location") || "{}"
-        );
+    let location = {};
 
-        return location?.lang || "en";
-      } catch {
-        return "en";
-      }
-    };
+    try {
+      location = JSON.parse(
+        localStorage.getItem("location") || "{}"
+      );
+    } catch {}
 
-    const lang = getLanguage();
+    const lang = location?.lang || "en";
 
-    // English = ngôn ngữ gốc, không cần Google Translate
-    if (!lang || lang === "en") {
-      ready();
+    if (lang === "en") {
+      finish();
       return;
     }
 
-    // Set cookie TRƯỚC khi Google Translate khởi tạo
+    // Set cookie ngay lập tức
     document.cookie = `googtrans=/en/${lang}; path=/`;
 
-    const initGoogleTranslate = () => {
-      if (initializedRef.current) return;
+    const init = () => {
+      if (initialized.current) {
+        return;
+      }
 
       if (
         !window.google?.translate?.TranslateElement
@@ -58,13 +50,14 @@ const GoogleTranslate = ({ onReady }) => {
         return;
       }
 
-      initializedRef.current = true;
+      initialized.current = true;
 
       new window.google.translate.TranslateElement(
         {
           pageLanguage: "en",
           autoDisplay: false,
-          includedLanguages: lang,
+          includedLanguages:
+            "vi,fr,de,es,it,pt,ru,uk,zh-CN,zh-TW,ja,ko,th,id",
         },
         "google_translate_element"
       );
@@ -74,55 +67,36 @@ const GoogleTranslate = ({ onReady }) => {
       interval = setInterval(() => {
         attempts++;
 
-        const select = document.querySelector(
-          ".goog-te-combo"
-        );
+        const select =
+          document.querySelector(".goog-te-combo");
 
-        if (!select) {
-          if (attempts >= 20) {
-            ready();
+        if (select) {
+          if (select.value !== lang) {
+            select.value = lang;
+
+            select.dispatchEvent(
+              new Event("change", {
+                bubbles: true,
+              })
+            );
           }
 
+          // Không chờ 800ms
+          finish();
           return;
         }
 
-        // Google đã nhận đúng language
-        if (select.value === lang) {
-          ready();
-          return;
+        if (attempts >= 20) {
+          finish();
         }
-
-        // Đổi language ngay lập tức
-        select.value = lang;
-
-        select.dispatchEvent(
-          new Event("change", {
-            bubbles: true,
-          })
-        );
-
-        // Không chờ 800ms
-        ready();
-      }, 100);
-
-      // Fallback tối đa 3 giây
-      fallback = setTimeout(() => {
-        console.warn(
-          "Google Translate initialization timeout."
-        );
-
-        ready();
-      }, 3000);
+      }, 50);
     };
 
-    window.googleTranslateElementInit =
-      initGoogleTranslate;
+    window.googleTranslateElementInit = init;
 
-    // Google Translate đã load
-    if (
-      window.google?.translate?.TranslateElement
-    ) {
-      initGoogleTranslate();
+    // Script đã load
+    if (window.google?.translate?.TranslateElement) {
+      init();
     } else {
       const existingScript = document.querySelector(
         'script[src*="translate.google.com/translate_a/element.js"]'
@@ -136,18 +110,18 @@ const GoogleTranslate = ({ onReady }) => {
 
         script.async = true;
 
-        document.body.appendChild(script);
+        document.head.appendChild(script);
       }
     }
 
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
+    // Fallback
+    timeout = setTimeout(() => {
+      finish();
+    }, 2000);
 
-      if (fallback) {
-        clearTimeout(fallback);
-      }
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
     };
   }, [onReady]);
 
@@ -160,4 +134,3 @@ const GoogleTranslate = ({ onReady }) => {
 };
 
 export default GoogleTranslate;
-
