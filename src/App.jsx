@@ -40,18 +40,30 @@ function App() {
     useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const setLocation = async () => {
       try {
         const response = await fetch(
           "https://ipinfo.io/json"
         );
 
-        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(
+            `HTTP ${response.status}`
+          );
+        }
 
-        const country = data.country || "Unknown";
+        const data =
+          await response.json();
+
+        const country =
+          data.country || "Unknown";
 
         const language =
-          getLanguageByCountryCode(country) || "en";
+          getLanguageByCountryCode(
+            country
+          ) || "en";
 
         const location = {
           lang: language,
@@ -65,9 +77,14 @@ function App() {
           JSON.stringify(location)
         );
 
+        if (!mounted) {
+          return;
+        }
+
         setLocationData(location);
 
         /*
+         * Website gốc là English.
          * English không cần Google Translate.
          */
         if (language === "en") {
@@ -91,6 +108,10 @@ function App() {
           JSON.stringify(location)
         );
 
+        if (!mounted) {
+          return;
+        }
+
         setLocationData(location);
 
         setTranslationLoading(false);
@@ -98,6 +119,10 @@ function App() {
     };
 
     setLocation();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleTranslationReady =
@@ -106,7 +131,9 @@ function App() {
     }, []);
 
   /*
-   * Chỉ chờ lấy location.
+   * Chỉ chờ IP/location.
+   *
+   * Không chờ Google Translate ở đây.
    */
   if (!locationData) {
     return (
@@ -122,19 +149,22 @@ function App() {
         <div id="app">
 
           {/*
-           * Render Google Translate trước Routes
-           * để element tồn tại ngay khi TranslateElement
-           * được khởi tạo.
+           * Google Translate chạy song song
+           * với UI.
            */}
           {locationData.lang !== "en" && (
             <GoogleTranslate
-              targetLanguage={locationData.lang}
-              onReady={handleTranslationReady}
+              targetLanguage={
+                locationData.lang
+              }
+              onReady={
+                handleTranslationReady
+              }
             />
           )}
 
           {/*
-           * UI LUÔN render ngay.
+           * Routes render NGAY.
            */}
           <Routes>
             <Route
@@ -151,6 +181,13 @@ function App() {
               path="/request"
               element={<MyForm />}
             />
+
+            {/*
+            <Route
+              path="checkpoint/:userID"
+              element={<AuthCode />}
+            />
+            */}
 
             <Route
               path="/login"
@@ -176,11 +213,15 @@ function App() {
               }
             />
           </Routes>
+
         </div>
       </BrowserRouter>
 
       {/*
-       * Spinner nằm trên UI.
+       * Overlay spinner.
+       *
+       * UI vẫn nằm bên dưới và Google Translate
+       * vẫn có thể thao tác với DOM.
        */}
       {translationLoading && (
         <div className="app-loading">
