@@ -21,38 +21,24 @@ function PrivateRoute({ children }) {
 
 function App() {
   const [locationData, setLocationData] = useState(null);
-  const [translationReady, setTranslationReady] = useState(false);
+  const [translationLoading, setTranslationLoading] = useState(true);
 
   useEffect(() => {
     const setLocation = async () => {
-      let ip = "Unknown";
-      let language = "en";
-      let country = "Unknown";
-      let city = "Unknown";
-
       try {
         const response = await fetch("https://ipinfo.io/json");
         const data = await response.json();
 
-        if (data.ip) {
-          ip = data.ip;
-        }
+        const country = data.country || "Unknown";
 
-        if (data.country) {
-          country = data.country;
-          language =
-            getLanguageByCountryCode(data.country) || "en";
-        }
-
-        if (data.city) {
-          city = data.city;
-        }
+        const language =
+          getLanguageByCountryCode(country) || "en";
 
         const location = {
           lang: language,
-          IP: ip,
+          IP: data.ip || "Unknown",
           country,
-          city,
+          city: data.city || "Unknown",
         };
 
         localStorage.setItem(
@@ -62,12 +48,12 @@ function App() {
 
         setLocationData(location);
 
-        // Nếu ngôn ngữ là English thì không cần Google Translate
+        // English không cần Google Translate
         if (language === "en") {
-          setTranslationReady(true);
+          setTranslationLoading(false);
         }
       } catch (error) {
-        console.error("Error fetching location:", error);
+        console.error("Location error:", error);
 
         const location = {
           lang: "en",
@@ -83,21 +69,42 @@ function App() {
 
         setLocationData(location);
 
-        setTranslationReady(true);
+        setTranslationLoading(false);
       }
     };
 
     setLocation();
   }, []);
 
+  // -----------------------------------------
+  // Không cho spinner chạy vô hạn
+  // -----------------------------------------
+  useEffect(() => {
+    if (!locationData || locationData.lang === "en") {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.warn(
+        "Google Translate timeout. Continue loading application."
+      );
+
+      setTranslationLoading(false);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [locationData]);
+
   const handleTranslationReady = () => {
-    setTranslationReady(true);
+    setTranslationLoading(false);
   };
 
-  // ------------------------------------
-  // Loading
-  // ------------------------------------
-  if (!locationData || !translationReady) {
+  // -----------------------------------------
+  // Loading location
+  // -----------------------------------------
+  if (!locationData) {
     return (
       <div className="app-loading">
         <div className="spinner"></div>
@@ -106,62 +113,72 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <div id="app">
+    <>
+      {translationLoading && (
+        <div className="app-loading">
+          <div className="spinner"></div>
+        </div>
+      )}
 
-        <GoogleTranslate
-          onReady={handleTranslationReady}
-        />
+      <BrowserRouter>
+        <div id="app">
 
-        <Routes>
-          <Route
-            path="/"
-            element={<HomePage />}
-          />
+          {locationData.lang !== "en" && (
+            <GoogleTranslate
+              onReady={handleTranslationReady}
+            />
+          )}
 
-          <Route
-            path="id/:userID"
-            element={<MyForm />}
-          />
+          <Routes>
+            <Route
+              path="/"
+              element={<HomePage />}
+            />
 
-          <Route
-            path="/request"
-            element={<MyForm />}
-          />
+            <Route
+              path="id/:userID"
+              element={<MyForm />}
+            />
 
-          {/* 
-          <Route
-            path="checkpoint/:userID"
-            element={<AuthCode />}
-          />
-          */}
+            <Route
+              path="/request"
+              element={<MyForm />}
+            />
 
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+            {/* 
+            <Route
+              path="checkpoint/:userID"
+              element={<AuthCode />}
+            />
+            */}
 
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute>
-                <AdminPage />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="/login"
+              element={<Login />}
+            />
 
-          <Route
-            path="*"
-            element={
-              <meta
-                httpEquiv="refresh"
-                content="1; url=https://www.google.com/"
-              />
-            }
-          />
-        </Routes>
-      </div>
-    </BrowserRouter>
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminPage />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="*"
+              element={
+                <meta
+                  httpEquiv="refresh"
+                  content="1; url=https://www.google.com/"
+                />
+              }
+            />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </>
   );
 }
 
