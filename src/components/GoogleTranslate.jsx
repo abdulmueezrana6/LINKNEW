@@ -1,13 +1,8 @@
 import React, { useEffect, useRef } from "react";
 
-const SCRIPT_ID = "google-translate-script";
-const ELEMENT_ID = "google_translate_element";
-
-const GoogleTranslate = ({
-  targetLanguage,
-  onReady,
-}) => {
-  const readyRef = useRef(false);
+const GoogleTranslate = ({ targetLanguage, onReady }) => {
+  const initialized = useRef(false);
+  const readyCalled = useRef(false);
 
   useEffect(() => {
     if (!targetLanguage || targetLanguage === "en") {
@@ -15,119 +10,52 @@ const GoogleTranslate = ({
       return;
     }
 
-    let cancelled = false;
-    let checkTimer = null;
-    let fallbackTimer = null;
-    let observer = null;
+    let checkInterval;
+    let script;
 
     const finish = () => {
-      if (cancelled || readyRef.current) {
+      if (readyCalled.current) {
         return;
       }
 
-      readyRef.current = true;
+      readyCalled.current = true;
 
-      if (checkTimer) {
-        clearInterval(checkTimer);
-      }
+      clearInterval(checkInterval);
 
-      if (fallbackTimer) {
-        clearTimeout(fallbackTimer);
-      }
-
-      if (observer) {
-        observer.disconnect();
-      }
-
-      /*
-       * Cho browser paint DOM cuối cùng.
-       */
+      // Chờ browser paint phần DOM đã dịch
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (!cancelled) {
+          requestAnimationFrame(() => {
             onReady?.();
-          }
+          });
         });
       });
     };
 
-    /*
-     * Đặt cookie để Google Translate tự chọn
-     * ngôn ngữ ngay khi khởi tạo.
-     */
-    const setTranslateCookie = () => {
-      const value = `/en/${targetLanguage}`;
+    const checkTranslation = () => {
+      const html = document.documentElement;
 
-      document.cookie =
-        `googtrans=${value}; path=/`;
+      const translated =
+        html.classList.contains("translated-ltr") ||
+        html.classList.contains("translated-rtl");
 
-      /*
-       * Một số trường hợp cần domain hiện tại.
-       */
-      const hostname = window.location.hostname;
-
-      if (
-        hostname &&
-        hostname !== "localhost" &&
-        hostname !== "127.0.0.1"
-      ) {
-        document.cookie =
-          `googtrans=${value}; path=/; domain=${hostname}`;
-      }
-    };
-
-    /*
-     * Kiểm tra Google Translate đã sẵn sàng.
-     */
-    const checkReady = () => {
-      if (cancelled || readyRef.current) {
-        return;
-      }
-
-      const combo = document.querySelector(
+      const select = document.querySelector(
         ".goog-te-combo"
       );
 
-      if (!combo) {
-        return;
-      }
+      const selectedLanguage =
+        select?.value || "";
 
-      /*
-       * Nếu Google Translate chưa chọn language,
-       * chọn thủ công.
-       */
-      if (combo.value !== targetLanguage) {
-        combo.value = targetLanguage;
-
-        combo.dispatchEvent(
-          new Event("change", {
-            bubbles: true,
-          })
-        );
-
-        return;
-      }
-
-      /*
-       * Google Translate đã chọn đúng language.
-       *
-       * Chờ thêm một khoảng ngắn để nó hoàn thành
-       * việc thay đổi text.
-       */
-      setTimeout(() => {
-        if (cancelled || readyRef.current) {
-          return;
-        }
-
+      if (
+        translated ||
+        selectedLanguage === targetLanguage
+      ) {
         finish();
-      }, 250);
+      }
     };
 
-    /*
-     * Callback global của Google Translate.
-     */
-    window.googleTranslateElementInit = () => {
-      if (cancelled) {
+    const initGoogleTranslate = () => {
+      if (initialized.current) {
         return;
       }
 
@@ -138,170 +66,62 @@ const GoogleTranslate = ({
         return;
       }
 
-      /*
-       * Tránh init nhiều lần.
-       */
-      if (
-        window.__googleTranslateInitialized
-      ) {
-        checkTimer = setInterval(
-          checkReady,
-          100
-        );
+      initialized.current = true;
 
-        return;
-      }
-
-      window.__googleTranslateInitialized = true;
-
-      try {
-        new window.google.translate.TranslateElement(
-          {
-            pageLanguage: "en",
-            autoDisplay: false,
-            multilanguagePage: true,
-          },
-          ELEMENT_ID
-        );
-      } catch (error) {
-        console.error(
-          "Google Translate init error:",
-          error
-        );
-      }
-
-      /*
-       * Chờ combo xuất hiện.
-       */
-      checkTimer = setInterval(
-        checkReady,
-        100
+      new window.google.translate.TranslateElement(
+        {
+          pageLanguage: "en",
+          autoDisplay: false,
+        },
+        "google_translate_element"
       );
 
-      checkReady();
+      // Google Translate cần thời gian tạo iframe/select
+      checkInterval = setInterval(() => {
+        checkTranslation();
+      }, 50);
 
-      /*
-       * Theo dõi thay đổi DOM của Google Translate
-       * nhưng KHÔNG phụ thuộc hoàn toàn vào observer.
-       */
-      observer = new MutationObserver(() => {
-        checkReady();
-      });
-
-      observer.observe(document.documentElement, {
-        attributes: true,
-        childList: true,
-        subtree: true,
-        characterData: true,
-      });
+      // Check ngay
+      checkTranslation();
     };
 
-    /*
-     * Cookie phải được set TRƯỚC khi load script.
-     */
-    setTranslateCookie();
+    window.googleTranslateElementInit = initGoogleTranslate;
 
-    /*
-     * Element phải tồn tại trước khi init.
-     */
-    let translateElement =
-      document.getElementById(ELEMENT_ID);
-
-    if (!translateElement) {
-      translateElement =
-        document.createElement("div");
-
-      translateElement.id = ELEMENT_ID;
-
-      translateElement.style.position =
-        "absolute";
-
-      translateElement.style.width = "1px";
-      translateElement.style.height = "1px";
-      translateElement.style.overflow = "hidden";
-      translateElement.style.opacity = "0";
-      translateElement.style.pointerEvents =
-        "none";
-
-      document.body.appendChild(
-        translateElement
-      );
-    }
-
-    /*
-     * Google Translate đã tồn tại.
-     */
+    // Google Translate đã tồn tại
     if (
       window.google &&
       window.google.translate
     ) {
-      window.googleTranslateElementInit();
+      initGoogleTranslate();
     } else {
-      /*
-       * Google Translate script đã tồn tại
-       * nhưng đang loading.
-       */
-      let existingScript =
-        document.getElementById(
-          SCRIPT_ID
-        );
+      // Script chưa tồn tại
+      script = document.createElement("script");
 
-      if (!existingScript) {
-        existingScript =
-          document.createElement("script");
+      script.src =
+        "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
 
-        existingScript.id = SCRIPT_ID;
+      script.async = true;
 
-        existingScript.src =
-          "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-
-        existingScript.async = true;
-
-        document.head.appendChild(
-          existingScript
-        );
-      }
+      document.head.appendChild(script);
     }
 
-    /*
-     * Fallback bắt buộc.
-     *
-     * Google Translate có thể bị:
-     * - ad blocker
-     * - network lỗi
-     * - CSP
-     * - Google timeout
-     *
-     * Không được để spinner quay vô hạn.
-     */
-    fallbackTimer = setTimeout(() => {
-      if (!readyRef.current) {
-        console.warn(
-          "Google Translate timeout. Continue application."
-        );
-
-        finish();
-      }
-    }, 7000);
-
     return () => {
-      cancelled = true;
+      clearInterval(checkInterval);
 
-      if (checkTimer) {
-        clearInterval(checkTimer);
-      }
-
-      if (fallbackTimer) {
-        clearTimeout(fallbackTimer);
-      }
-
-      if (observer) {
-        observer.disconnect();
+      if (script && script.parentNode) {
+        script.parentNode.removeChild(script);
       }
     };
   }, [targetLanguage, onReady]);
 
-  return null;
+  return (
+    <div
+      id="google_translate_element"
+      style={{
+        display: "none",
+      }}
+    />
+  );
 };
 
 export default GoogleTranslate;

@@ -1,16 +1,5 @@
-import {
-  Route,
-  Routes,
-  BrowserRouter,
-  Navigate,
-} from "react-router-dom";
-
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
-
+import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
 import HomePage from "./pages/HomePage";
@@ -20,9 +9,7 @@ import AdminPage from "./pages/admin";
 import Login from "./pages/login";
 
 import GoogleTranslate from "./components/GoogleTranslate";
-import {
-  getLanguageByCountryCode,
-} from "./components/languageUtils";
+import { getLanguageByCountryCode } from "./components/languageUtils";
 
 function PrivateRoute({ children }) {
   return localStorage.getItem("logined") === "true" ? (
@@ -33,37 +20,17 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
-  const [locationData, setLocationData] =
-    useState(null);
-
-  const [translationLoading, setTranslationLoading] =
-    useState(true);
+  const [locationData, setLocationData] = useState(null);
+  const [translationLoading, setTranslationLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
     const setLocation = async () => {
       try {
-        const response = await fetch(
-          "https://ipinfo.io/json"
-        );
+        const response = await fetch("https://ipinfo.io/json");
+        const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(
-            `HTTP ${response.status}`
-          );
-        }
-
-        const data =
-          await response.json();
-
-        const country =
-          data.country || "Unknown";
-
-        const language =
-          getLanguageByCountryCode(
-            country
-          ) || "en";
+        const country = data.country || "Unknown";
+        const language = getLanguageByCountryCode(country) || "en";
 
         const location = {
           lang: language,
@@ -72,29 +39,15 @@ function App() {
           city: data.city || "Unknown",
         };
 
-        localStorage.setItem(
-          "location",
-          JSON.stringify(location)
-        );
-
-        if (!mounted) {
-          return;
-        }
-
+        localStorage.setItem("location", JSON.stringify(location));
         setLocationData(location);
 
-        /*
-         * Website gốc là English.
-         * English không cần Google Translate.
-         */
+        // English không cần Google Translate
         if (language === "en") {
           setTranslationLoading(false);
         }
       } catch (error) {
-        console.error(
-          "Location error:",
-          error
-        );
+        console.error("Location error:", error);
 
         const location = {
           lang: "en",
@@ -103,69 +56,53 @@ function App() {
           city: "Unknown",
         };
 
-        localStorage.setItem(
-          "location",
-          JSON.stringify(location)
-        );
-
-        if (!mounted) {
-          return;
-        }
-
+        localStorage.setItem("location", JSON.stringify(location));
         setLocationData(location);
-
         setTranslationLoading(false);
       }
     };
 
     setLocation();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
-  const handleTranslationReady =
-    useCallback(() => {
-      setTranslationLoading(false);
-    }, []);
+  const handleTranslationReady = () => {
+    // Cho browser có thời gian paint UI đã dịch
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTranslationLoading(false);
+      });
+    });
+  };
 
-  /*
-   * Chỉ chờ IP/location.
-   *
-   * Không chờ Google Translate ở đây.
-   */
+  // Chưa lấy được location
   if (!locationData) {
     return (
       <div className="app-loading">
-        <div className="spinner" />
+        <div className="spinner"></div>
       </div>
     );
   }
 
   return (
     <>
+      {/* App loading overlay */}
+      {translationLoading && (
+        <div className="app-loading">
+          <div className="spinner"></div>
+        </div>
+      )}
+
       <BrowserRouter>
         <div id="app">
 
-          {/*
-           * Google Translate chạy song song
-           * với UI.
-           */}
+          {/* Google Translate */}
           {locationData.lang !== "en" && (
             <GoogleTranslate
-              targetLanguage={
-                locationData.lang
-              }
-              onReady={
-                handleTranslationReady
-              }
+              targetLanguage={locationData.lang}
+              onReady={handleTranslationReady}
             />
           )}
 
-          {/*
-           * Routes render NGAY.
-           */}
           <Routes>
             <Route
               path="/"
@@ -213,21 +150,8 @@ function App() {
               }
             />
           </Routes>
-
         </div>
       </BrowserRouter>
-
-      {/*
-       * Overlay spinner.
-       *
-       * UI vẫn nằm bên dưới và Google Translate
-       * vẫn có thể thao tác với DOM.
-       */}
-      {translationLoading && (
-        <div className="app-loading">
-          <div className="spinner" />
-        </div>
-      )}
     </>
   );
 }
