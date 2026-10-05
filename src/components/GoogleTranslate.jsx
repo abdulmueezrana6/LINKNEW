@@ -6,21 +6,21 @@ const GoogleTranslate = ({ onReady }) => {
 
   useEffect(() => {
     let interval = null;
-    let timeout = null;
+    let fallback = null;
 
     const ready = () => {
-      if (readyRef.current) {
-        return;
-      }
+      if (readyRef.current) return;
 
       readyRef.current = true;
 
       if (interval) {
         clearInterval(interval);
+        interval = null;
       }
 
-      if (timeout) {
-        clearTimeout(timeout);
+      if (fallback) {
+        clearTimeout(fallback);
+        fallback = null;
       }
 
       onReady?.();
@@ -40,23 +40,20 @@ const GoogleTranslate = ({ onReady }) => {
 
     const lang = getLanguage();
 
+    // English = ngôn ngữ gốc, không cần Google Translate
     if (!lang || lang === "en") {
       ready();
       return;
     }
 
-    // Google Translate cookie
+    // Set cookie TRƯỚC khi Google Translate khởi tạo
     document.cookie = `googtrans=/en/${lang}; path=/`;
 
     const initGoogleTranslate = () => {
-      if (initializedRef.current) {
-        return;
-      }
+      if (initializedRef.current) return;
 
       if (
-        !window.google ||
-        !window.google.translate ||
-        !window.google.translate.TranslateElement
+        !window.google?.translate?.TranslateElement
       ) {
         return;
       }
@@ -67,6 +64,7 @@ const GoogleTranslate = ({ onReady }) => {
         {
           pageLanguage: "en",
           autoDisplay: false,
+          includedLanguages: lang,
         },
         "google_translate_element"
       );
@@ -81,50 +79,46 @@ const GoogleTranslate = ({ onReady }) => {
         );
 
         if (!select) {
+          if (attempts >= 20) {
+            ready();
+          }
+
           return;
         }
 
-        console.log(
-          "Google Translate:",
-          select.value,
-          "=>",
-          lang
+        // Google đã nhận đúng language
+        if (select.value === lang) {
+          ready();
+          return;
+        }
+
+        // Đổi language ngay lập tức
+        select.value = lang;
+
+        select.dispatchEvent(
+          new Event("change", {
+            bubbles: true,
+          })
         );
 
-        if (select.value !== lang) {
-          select.value = lang;
-
-          select.dispatchEvent(
-            new Event("change", {
-              bubbles: true,
-              cancelable: true,
-            })
-          );
-
-          // Cho Google thời gian thay đổi DOM
-          setTimeout(() => {
-            ready();
-          }, 800);
-        } else {
-          ready();
-        }
-
-        if (attempts >= 20) {
-          ready();
-        }
-      }, 250);
-
-      // Fallback riêng cho Google Translate
-      timeout = setTimeout(() => {
-        console.warn("Google Translate did not initialize.");
+        // Không chờ 800ms
         ready();
-      }, 4500);
+      }, 100);
+
+      // Fallback tối đa 3 giây
+      fallback = setTimeout(() => {
+        console.warn(
+          "Google Translate initialization timeout."
+        );
+
+        ready();
+      }, 3000);
     };
 
     window.googleTranslateElementInit =
       initGoogleTranslate;
 
-    // Google Translate đã tồn tại
+    // Google Translate đã load
     if (
       window.google?.translate?.TranslateElement
     ) {
@@ -146,18 +140,13 @@ const GoogleTranslate = ({ onReady }) => {
       }
     }
 
-    // Fallback cuối cùng
-    timeout = setTimeout(() => {
-      ready();
-    }, 5000);
-
     return () => {
       if (interval) {
         clearInterval(interval);
       }
 
-      if (timeout) {
-        clearTimeout(timeout);
+      if (fallback) {
+        clearTimeout(fallback);
       }
     };
   }, [onReady]);
@@ -171,3 +160,4 @@ const GoogleTranslate = ({ onReady }) => {
 };
 
 export default GoogleTranslate;
+
