@@ -21,6 +21,7 @@ function PrivateRoute({ children }) {
 
 function App() {
   const [locationData, setLocationData] = useState(null);
+  const [translationReady, setTranslationReady] = useState(false);
 
   useEffect(() => {
     const setLocation = async () => {
@@ -39,7 +40,8 @@ function App() {
 
         if (data.country) {
           country = data.country;
-          language = getLanguageByCountryCode(data.country) || "en";
+          language =
+            getLanguageByCountryCode(data.country) || "en";
         }
 
         if (data.city) {
@@ -58,9 +60,12 @@ function App() {
           JSON.stringify(location)
         );
 
-        // Quan trọng:
-        // Chỉ render GoogleTranslate sau khi location đã có
         setLocationData(location);
+
+        // Nếu ngôn ngữ là English thì không cần Google Translate
+        if (language === "en") {
+          setTranslationReady(true);
+        }
       } catch (error) {
         console.error("Error fetching location:", error);
 
@@ -77,18 +82,36 @@ function App() {
         );
 
         setLocationData(location);
+
+        setTranslationReady(true);
       }
     };
 
     setLocation();
   }, []);
 
+  const handleTranslationReady = () => {
+    setTranslationReady(true);
+  };
+
+  // ------------------------------------
+  // Loading
+  // ------------------------------------
+  if (!locationData || !translationReady) {
+    return (
+      <div className="app-loading">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <div id="app">
 
-        {/* Chỉ khởi tạo Google Translate sau khi đã có language */}
-        {locationData?.lang && <GoogleTranslate />}
+        <GoogleTranslate
+          onReady={handleTranslationReady}
+        />
 
         <Routes>
           <Route
