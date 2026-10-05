@@ -90,7 +90,7 @@ function App() {
       );
 
       setTranslationLoading(false);
-    }, 5000);
+    }, 1000);
 
     return () => {
       clearTimeout(timeout);
