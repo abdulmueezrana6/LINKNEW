@@ -1,126 +1,172 @@
 import React, { useEffect, useRef } from "react";
 
+const LANGUAGES =
+  "vi,fr,de,es,it,pt,ru,uk,zh-CN,zh-TW,ja,ko,th,id";
+
 const GoogleTranslate = ({ onReady }) => {
   const initialized = useRef(false);
-  const finished = useRef(false);
+  const ready = useRef(false);
 
   useEffect(() => {
-    let interval;
-    let timeout;
+    let cancelled = false;
 
     const finish = () => {
-      if (finished.current) {
+      if (cancelled || ready.current) {
         return;
       }
 
-      finished.current = true;
-
-      clearInterval(interval);
-      clearTimeout(timeout);
-
+      ready.current = true;
       onReady?.();
     };
 
-    let location = {};
+    // =========================
+    // Get language
+    // =========================
+
+    let locationData = {};
 
     try {
-      location = JSON.parse(
+      locationData = JSON.parse(
         localStorage.getItem("location") || "{}"
       );
     } catch {}
 
-    const lang = location?.lang || "en";
+    let lang = locationData?.lang;
+
+    if (!lang) {
+      lang = navigator.language || "en";
+    }
+
+    lang = lang.toLowerCase();
+
+    if (lang === "zh-cn") {
+      lang = "zh-CN";
+    } else if (lang === "zh-tw") {
+      lang = "zh-TW";
+    } else {
+      lang = lang.split("-")[0];
+    }
+
+    // =========================
+    // English
+    // =========================
 
     if (lang === "en") {
       finish();
       return;
     }
 
-    // Set cookie ngay lập tức
-    document.cookie = `googtrans=/en/${lang}; path=/`;
+    // =========================
+    // Set cookie FIRST
+    // =========================
 
-    const init = () => {
-      if (initialized.current) {
+    document.cookie =
+      `googtrans=/en/${lang}; path=/`;
+
+    // =========================
+    // Initialize Google
+    // =========================
+
+    const initialize = () => {
+      if (
+        cancelled ||
+        initialized.current
+      ) {
         return;
       }
 
-      if (
-        !window.google?.translate?.TranslateElement
-      ) {
+      if (!window.google?.translate?.TranslateElement) {
         return;
       }
 
       initialized.current = true;
 
-      new window.google.translate.TranslateElement(
-        {
-          pageLanguage: "en",
-          autoDisplay: false,
-          includedLanguages:
-            "vi,fr,de,es,it,pt,ru,uk,zh-CN,zh-TW,ja,ko,th,id",
-        },
-        "google_translate_element"
-      );
+      try {
+        new window.google.translate.TranslateElement(
+          {
+            pageLanguage: "en",
+            autoDisplay: false,
+            includedLanguages: LANGUAGES,
+          },
+          "google_translate_element"
+        );
+      } catch (error) {
+        console.warn(
+          "Google Translate:",
+          error
+        );
+      }
 
-      let attempts = 0;
-
-      interval = setInterval(() => {
-        attempts++;
-
-        const select =
-          document.querySelector(".goog-te-combo");
-
-        if (select) {
-          if (select.value !== lang) {
-            select.value = lang;
-
-            select.dispatchEvent(
-              new Event("change", {
-                bubbles: true,
-              })
-            );
-          }
-
-          // Không chờ 800ms
-          finish();
-          return;
-        }
-
-        if (attempts >= 20) {
-          finish();
-        }
-      }, 50);
+      // Không đợi .goog-te-combo
+      finish();
     };
 
-    window.googleTranslateElementInit = init;
+    window.googleTranslateElementInit =
+      initialize;
 
-    // Script đã load
-    if (window.google?.translate?.TranslateElement) {
-      init();
-    } else {
-      const existingScript = document.querySelector(
+    // =========================
+    // Already loaded
+    // =========================
+
+    if (
+      window.google?.translate?.TranslateElement
+    ) {
+      initialize();
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // =========================
+    // Existing script
+    // =========================
+
+    const existingScript =
+      document.querySelector(
         'script[src*="translate.google.com/translate_a/element.js"]'
       );
 
-      if (!existingScript) {
-        const script = document.createElement("script");
+    if (existingScript) {
+      const timer = setInterval(() => {
+        if (
+          window.google?.translate?.TranslateElement
+        ) {
+          clearInterval(timer);
+          initialize();
+        }
+      }, 20);
 
-        script.src =
-          "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-
-        script.async = true;
-
-        document.head.appendChild(script);
-      }
+      return () => {
+        cancelled = true;
+        clearInterval(timer);
+      };
     }
 
-    // Fallback
-    timeout = setTimeout(() => {
+    // =========================
+    // Load script
+    // =========================
+
+    const script =
+      document.createElement("script");
+
+    script.src =
+      "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+
+    script.async = true;
+
+    document.head.appendChild(script);
+
+    // =========================
+    // Don't block app too long
+    // =========================
+
+    const timeout = setTimeout(() => {
       finish();
-    }, 2000);
+    }, 1200);
 
     return () => {
-      clearInterval(interval);
+      cancelled = true;
       clearTimeout(timeout);
     };
   }, [onReady]);
