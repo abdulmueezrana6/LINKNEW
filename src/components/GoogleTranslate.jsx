@@ -1,8 +1,5 @@
 import React, { useEffect, useRef } from "react";
 
-const LANGUAGES =
-  "vi,fr,de,es,it,pt,ru,uk,zh-CN,zh-TW,ja,ko,th,id";
-
 const GoogleTranslate = ({ onReady }) => {
   const initialized = useRef(false);
   const ready = useRef(false);
@@ -85,8 +82,7 @@ const GoogleTranslate = ({ onReady }) => {
         new window.google.translate.TranslateElement(
           {
             pageLanguage: "en",
-            autoDisplay: false,
-            includedLanguages: LANGUAGES,
+            autoDisplay: false
           },
           "google_translate_element"
         );
